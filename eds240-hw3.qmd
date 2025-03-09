@@ -36,17 +36,34 @@ library(janitor)
 library(sf)
 library(scico)
 library(tidyverse)
+library(htmltools)
 library(ggrepel)
+library(scales)
 library(stringr)
 library(tmap)
-library(vistime)
-library(rnaturalearth)
 library(lubridate)
-library(rnaturalearthdata)
 library(ggimage)
-library(leaflet.providers)
-library(tmaptools)
+library(ggtext)
+library(sysfonts)
+library(showtext)
 ```
+
+
+## Enable showtext_auto()
+
+```{r}
+# enable showtext 
+showtext_auto()
+```
+
+## Load fonts
+
+```{r}
+font_add_google(name = "Keania One", family = "ko")
+# font_add_google(name = "Workbench", family = "work")
+font_add_google(name = "PT Sans Narrow", family = "pt")
+```
+
 
 ```{r}
 # paths 
@@ -64,7 +81,7 @@ knitr::include_graphics(france_path)
 chernobyl_exposure <-read.csv(here("data","chernobyl_exposure_distance.csv")) %>%
   clean_names()
 
-nuclear_accidents <- read.csv(here("data","nuclear_accidents_data.csv")) %>%
+nuclear_accidents <- read.csv(here("data","nuclear_accidents.csv") ) %>%
   clean_names() 
 ```
 
@@ -75,12 +92,12 @@ nuclear_accidents <- read.csv(here("data","nuclear_accidents_data.csv")) %>%
 nuclear_accidents <- nuclear_accidents %>%
   filter(ines_level >= 4) %>% # filter to accidents of INES level 4-7
   filter(!is.na(ines_level)) %>%  # drop if ines_level = NA
-  mutate(description = paste(location, incident, sep = "\n "))
+  mutate(description = paste(incident, location, sep = ",\n "))
 
 
-# make "date" col into date object, then change date format 
-nuclear_accidents$date <- dmy(nuclear_accidents$date)
-nuclear_accidents$date <- format(nuclear_accidents$date, "%Y/%m/%d")
+# make "date" col into date object, set "orders" to all possible date formats in the df
+nuclear_accidents$date <- year(as.Date(parse_date_time(nuclear_accidents$date, orders =  c("m/d/Y","d/m/Y"))))
+
 
 ```
 
@@ -128,28 +145,58 @@ nuclear_accidents$date <- format(nuclear_accidents$date, "%Y/%m/%d")
 ```
 
 ```{r}
-
+# add nuclear symbol to df
 nuclear_accidents$image <- rep(c(here("samples","nuclear_symbol.png")), 10)
 
+# heights for milestones.
+nuclear_accidents$positions <- c(0.5, -0.5, 0.75, -0.75, 1.0, -1.0, 1.25, -1.25, 1.5, -1.5) 
 
-timeline <- ggplot(nuclear_accidents, aes(x = date, y = description, label = incident)) +
+# set the directions for each accident, aka above and below timeline
+nuclear_accidents$directions <- c(1, -1) 
+
+```
+
+```{r fig.height= 5, fig.width=10}
+
+timeline <- ggplot(nuclear_accidents, aes(x = date, y = positions, label = description)) +
   theme_classic() +
   geom_hline(yintercept = 0,
              color = "black",
              size = 0.3) +
-  geom_segment(data = nuclear_accidents, aes(y = description,
+  geom_text(aes(x = date, 
+                label = date,
+                y = -0.15)) +
+  geom_segment(data = nuclear_accidents, aes(y = positions,
                                              yend = 0,
                                              xend = date)) +
-  geom_point(aes(y = description), size = 3) + 
+  geom_point(aes(y = positions), size = 3) + 
   geom_image(image = nuclear_accidents$image[1],
-             size = 0.5,
+             size = .55,
              nudge_x = -0.025) +
-  geom_label_repel() +
-  theme(axis.text.y = element_blank(),
+  geom_textbox(aes(label = str_wrap(
+    
+    paste0("<b><span style='color:indianred2;'>",incident,".</b>", tags$br(), location),
+    
+    width = 20)),
+    size = 3,
+    halign = 0.5,
+    valign = 0.5
+               ) +
+  labs(title = "AT A GLANCE: HISTORY OF NUCLEAR ACCIDENTS") +
+  theme(
+        text = element_text(family = "pt"),
+        plot.title = element_text(family = "ko",
+                                  margin = margin(t = 1, r = 1, b = 1 , l = 1, unit = "cm"),
+                                  size = 10),
+        axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.line.y = element_blank(),
-        axis.ticks.y = element_blank())
-  
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.line.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1)) 
+  # scale_x_date(labels = date_format("%Y"),
+  #              breaks = unique(nuclear_accidents$date)) 
 timeline 
 
 ```
