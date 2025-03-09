@@ -149,54 +149,82 @@ nuclear_accidents$date <- year(as.Date(parse_date_time(nuclear_accidents$date, o
 nuclear_accidents$image <- rep(c(here("samples","nuclear_symbol.png")), 10)
 
 # heights for milestones.
-nuclear_accidents$positions <- c(0.5, -0.5, 0.75, -0.75, 1.0, -1.0, 1.25, -1.25, 1.5, -1.5) 
+nuclear_accidents$positions <- c(0.3, -0.5, 0.5, -0.3, .5, -.50, .6, -.6, .6, -.6) 
 
 # set the directions for each accident, aka above and below timeline
 nuclear_accidents$directions <- c(1, -1) 
 
 ```
 
-```{r fig.height= 5, fig.width=10}
+```{r}
 
-timeline <- ggplot(nuclear_accidents, aes(x = date, y = positions, label = description)) +
+timeline <- ggplot(nuclear_accidents, aes(x = date, y = positions, label = description, fill = as.factor(ines_level))) +
   theme_classic() +
   geom_hline(yintercept = 0,
-             color = "black",
-             size = 0.3) +
-  geom_text(aes(x = date, 
-                label = date,
-                y = -0.15)) +
+             color = "white",
+             size = 0.3,
+             show.legend = FALSE) +
   geom_segment(data = nuclear_accidents, aes(y = positions,
                                              yend = 0,
-                                             xend = date)) +
-  geom_point(aes(y = positions), size = 3) + 
+                                             xend = date),
+                color = "white",
+               show.legend = FALSE) +
+  geom_label(aes(x = date, 
+                label = date,
+                y = -0.08)) +
+  geom_point(aes(y = positions), size = 1) + 
   geom_image(image = nuclear_accidents$image[1],
-             size = .55,
+             size = 0.4,
              nudge_x = -0.025) +
   geom_textbox(aes(label = str_wrap(
     
-    paste0("<b><span style='color:indianred2;'>",incident,".</b>", tags$br(), location),
+    paste0("<b><span style='color:white;'>",incident,".</b>", tags$br(), location),
     
-    width = 20)),
+    width = 20),
+    fill = as.factor(ines_level)),
     size = 3,
+    width = 0.1,
     halign = 0.5,
-    valign = 0.5
-               ) +
+    valign = 0.5,
+    nudge_y = -0.2,
+    show.legend = TRUE
+              ) +
+  scale_fill_manual(values = c("firebrick2","darkorange","gold1","springgreen2")) +
+  guides(fill = guide_legend(title = "INES Level", position = "bottom"),
+         override.aes = list(size = 5)) + 
   labs(title = "AT A GLANCE: HISTORY OF NUCLEAR ACCIDENTS") +
   theme(
         text = element_text(family = "pt"),
         plot.title = element_text(family = "ko",
-                                  margin = margin(t = 1, r = 1, b = 1 , l = 1, unit = "cm"),
-                                  size = 10),
+                                  margin = margin(t = 0, r = 0, b = 1.5 , l = 0, unit = "cm"),
+                                  size = 30,
+                                  color = "white"),
+        plot.title.position = "plot",
         axis.text.y = element_blank(),
         axis.title.y = element_blank(),
         axis.line.y = element_blank(),
-        axis.ticks.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank(),
         axis.title.x = element_blank(),
         axis.line.x = element_blank(),
-        plot.margin = margin(t = 1, r = 1, b = 1, l = 1)) 
-  # scale_x_date(labels = date_format("%Y"),
-  #              breaks = unique(nuclear_accidents$date)) 
+        legend.text = element_text(color = "black"),
+        # legend.direction = "horizontal",
+        # legend.position = "bottom",
+        panel.background = element_rect(fill = "#000"),
+        plot.background = element_rect(fill = "#000"),
+        plot.margin = margin(t = 1.5, r = .5, b = 2, l =.50, unit = "cm")) +
+   coord_cartesian(clip = "off")
+
+
+ggsave("timeline.png",
+       plot = timeline,
+       device = "png",
+       width = 10, 
+       height = 12,
+       units = "cm",
+       dpi = 300
+       )
+
 timeline 
 
 ```
