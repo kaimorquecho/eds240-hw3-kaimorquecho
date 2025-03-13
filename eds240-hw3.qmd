@@ -43,6 +43,7 @@ library(stringr)
 library(tmap)
 library(lubridate)
 library(ggimage)
+library(ggfx)
 library(ggtext)
 library(sysfonts)
 library(magick)
@@ -153,7 +154,7 @@ nuclear_accidents$image <- rep(c(here("samples","nuclear_symbol.png")), 10)
 background <- "https://miro.medium.com/v2/resize:fit:4800/format:webp/1*hL391IqaaorQv-c5-a5w-w.jpeg"
 
 # heights for milestones.
-nuclear_accidents$positions <- c(0.15, -0.1, 0.1, -0.1, .1, -.1, .1, -.1, .1, -.1) 
+nuclear_accidents$positions <- c(0.13, -0.1, 0.09, -0.05, .05, -.1, .09, -.05, .05, -.05) 
 
 # set the directions for each accident, aka above and below timeline
 nuclear_accidents$directions <- c(1, -1) 
@@ -166,18 +167,34 @@ timeline <- ggplot(nuclear_accidents, aes(x = date, y = positions, label = descr
   theme_classic() +
   
   # horizontal timeline
-  geom_hline(yintercept = 0,
+  with_outer_glow(
+    
+    geom_hline(yintercept = 0,
              color = "springgreen",
              alpha = 0.9,
-             linewidth = 4,
-             show.legend = FALSE) +
+             linejoin = "round",
+             linewidth = 3,
+             show.legend = FALSE),
+    
+    
+    colour = "springgreen",
+    sigma = 2,
+    expand = 1) +
   
   # lines conencting accident to timeline
-  geom_segment(data = nuclear_accidents, aes(y = positions,
+  with_outer_glow(
+    
+    
+    geom_segment(data = nuclear_accidents, aes(y = positions,
                                              yend = 0,
                                              xend = date),
-                color = "white",
-               show.legend = FALSE) +
+                 linewidth = 1,
+                 color = "springgreen"),
+    
+    
+    colour = "springgreen",
+    sigma = 2,
+    expand = 0.5) +
   
   # year labels on timeline
   geom_label(aes(x = date, 
@@ -202,16 +219,14 @@ timeline <- ggplot(nuclear_accidents, aes(x = date, y = positions, label = descr
     paste0("<b><span style='color:black;'>",incident,".</b>", tags$br(), location))),
     fill = "white",
     color = "black",
-    size = 6,
+    size = 5,
+    
     family = "ss",
+    width = 0.2,
     halign = 0.5,
     valign = 0.5,
     show.legend = TRUE
               ) +
-  
-  # guides(fill = guide_legend(title = "INES Level", position = "bottom"),
-  #        override.aes = list(size = 5)) + 
-  # 
   
   labs(title = "AT A GLANCE: HISTORY OF NUCLEAR ACCIDENTS",
        subtitle = "The International Nuclear and Radiological Event Scale (INES) is a logarithmic scale with 7 levels. Levels 4-7 are reserved for high-impact accidents") +
@@ -238,9 +253,9 @@ timeline <- ggplot(nuclear_accidents, aes(x = date, y = positions, label = descr
         legend.text = element_text(color = "black"),
         # legend.direction = "horizontal",
         # legend.position = "bottom",
-        panel.background = element_rect(fill = "hotpink4"),
-        plot.background = element_rect(fill = "hotpink4"),
-        plot.margin = margin(t = 60, r = 50, b = 50, l = 50, unit = "pt")) +
+        panel.background = element_rect(fill = "black"),
+        plot.background = element_rect(fill = "black"),
+        plot.margin = margin(t = 70, r = 100, b = 70, l = 100, unit = "pt")) +
   
   
    coord_cartesian(clip = "off")
