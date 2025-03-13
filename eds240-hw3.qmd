@@ -82,10 +82,19 @@ knitr::include_graphics(france_path)
 chernobyl_exposure <-read.csv(here("data","chernobyl_exposure_distance.csv")) %>%
   clean_names()
 
+chernobyl_water <- read.csv(here("data","chernobyl_water_chem.csv")) %>%
+  clean_names()
+
 nuclear_accidents <- read.csv(here("data","nuclear_accidents.csv") ) %>%
   clean_names() 
 ```
 
+# Wrangle Chernobyl exposure rate data 
+```{r}
+# drop NA's 
+chernobyl_exposure <- chernobyl_exposure %>%
+  filter(!is.na(exposure_dose_rate_m_r_h)) 
+```
 
 # Wrangle nuclear accidents data
 ```{r}
@@ -160,6 +169,9 @@ nuclear_accidents$positions <- c(0.13, -0.1, 0.09, -0.05, .05, -.1, .09, -.05, .
 nuclear_accidents$directions <- c(1, -1) 
 
 ```
+
+
+# Create timeline of nuclear accidents
 
 ```{r}
 
@@ -238,8 +250,7 @@ timeline <- ggplot(nuclear_accidents, aes(x = date, y = positions, label = descr
                                   size = 30,
                                   color = "springgreen"),
         plot.subtitle = element_text(family = "ss",
-                                     face = "bold",
-                                     size = 18,
+                                     size = 20,
                                      color = "white",
                                      margin = margin(t = 0, r = 0, b = 30 , l = 0, unit = "pt")),
         plot.title.position = "plot",
@@ -276,13 +287,116 @@ timeline
 
 ```
 
+# Create exposure data viz
+```{r}
+exposure <- ggplot(chernobyl_exposure, aes(
+  x = distance_from_ch_npp_km,
+  y = 1,
+  fill = exposure_dose_rate_m_r_h
+)) +
+  
+  geom_tile(width = 8, height = 1) + 
+    
+  scale_fill_gradientn(
+      
+    colours = c("springgreen","firebrick1","deeppink"),
+    name = "Dose Rate\n(mR/h)",
+    transform = "sqrt"
+    
+    ) +
+    
+  guides(fill = guide_colorbar(
+    
+    barwidth = 20,
+    barheight = 0.4,
+    reverse = TRUE)
+    
+    ) +
+    
+  labs(
+    
+    title = "RADIATION EXPOSURE BY PROXIMITY TO CHERNOBYL NUCLEAR POWER PLANT MEASURED FROM JANUARY 1987 TO JUNE, 1987",
+    
+    subtitle = "Gradient represents exposure dose rate (mR/h)",
+    
+    x = "Distance from Chernobyl NPP (km)",
+    
+    y = NULL
+    
+  ) +
+  
+  theme_minimal(base_family = "ss") +
+  
+  theme(
+    plot.background = element_rect(fill = "black"),
+    panel.grid = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x = element_text(color = "white"),
+    axis.title.x = element_text(color = "white"),
+    plot.title = element_text(color = "springgreen", size = 25, family = "ko"),
+    plot.subtitle = element_text(color = "white", size = 12),
+    legend.title = element_text(color = "white"),
+    legend.text = element_text(color = "white"),
+    legend.position = "bottom",
+    legend.direction = "horizontal"
+  )
 
+exposure
+```
 
+# Create water contamination data viz 
+```{r}
 
+water <- ggplot(chernobyl_water, aes(x = distance_from_cnpp_km, y = x137cs_deposition_k_bq_m2)) +
+  
+  # trend line with glow
+  with_outer_glow(
+    geom_smooth(method = "loess", se = FALSE, color = "deeppink", size = 1.5),
+    colour = "deeppink",
+    sigma = 5,
+    expand = 1
+  ) +
+  
+    # lakes as points
+  with_outer_glow(
+    geom_point(size = 6, color = "black"),
+    colour = "deeppink",
+    sigma = 3,
+    expand = 3
+  ) +
 
+  scale_y_continuous(trans = "sqrt") +
+  
+  # Labels
+  labs(
+    title = "Radioactive Cesium-137 Deposition",
+    subtitle = "Distance from Chernobyl NPP vs Deposition (kBq/m²)",
+    x = "Distance from Chernobyl NPP (km)",
+    y = "Cs-137 Deposition (kBq/m²)"
+  ) +
 
+  theme(
+    plot.background = element_rect(fill = "black", color = NA),
+    panel.background = element_rect(fill = "black", color = NA),
+    panel.grid = element_line(colour = "springgreen",
+                              linewidth = 0.1),
+    
+    axis.title = element_text(color = "deeppink", size = 14, family = "ss"),
+    axis.text = element_text(color = "white", size = 12, family = "ss"),
+    
+    plot.title = element_text(color = "deeppink", size = 20, family = "ko"),
+    plot.subtitle = element_text(color = "white", size = 14, family = "ss"),
+    
+    plot.margin = margin(1, 1, 1, 1, "cm")
+  )
 
+ggsave("chernobyl_water_glow.png", plot = water, width = 10, height = 6, dpi = 300)
 
+water
+
+```
 
 
 
