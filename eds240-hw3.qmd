@@ -20,11 +20,29 @@ The main question has changed since HW1 because of the data available online. I 
 
 Given the data that I've found, my 3 sub-questions will likely be:
 - How common are nuclear disasters?
-- How widespread and pervasive is soil contamination after a nuclear disaster? 
-- What are the long-term effects of radiation exposure on wildlife? 
+- How widespread was water contamination after the Chernobyl nuclear disaster? 
+- How far did radiation contamination go after the Chernobyl nuclear accident? 
 
 
-3. I am having a hard time determining which variables I want to focus on because I keep rethinking my data viz choices!
+3. I will use the variables below to showcase the effect of just ONE of the nuclear accidents in history.
+
+From the nuclear accidents dataset:
+- Nuclear accident description
+- Nuclear accident location
+- Nuclear accident date
+- Nuclear accident INES level
+With these variables I will create a timeline of the most important (INES level 4 and above) nuclear accidents in human history and will then highlight one (Chernobyl) to show how dangerous and destructive just ONE bad nuclear accident can be.
+
+From the Chernobyl water chemistry dataset:
+- Distance from Chernobyl(km) 
+- Cs-137 Deposition (kBq/m^2)
+I will visualize the level of Cesium contamination in waterways near the nuclear power plant 
+
+From the Chernobyl radiation exposure dataset:
+- Distance from Chernobyl(km) 
+- Exposure dose rate (kBq/m^2)
+With this dataset and variables I will show how far and how high the levels of radiation reached one year AFTER the nuclear accident. Despite a year going by, the levels are beyond alarming and they still are today. 
+
 
 4. Examples I am using as inspiration: 
 ```{r message=FALSE}
@@ -40,7 +58,6 @@ library(htmltools)
 library(ggrepel)
 library(scales)
 library(stringr)
-library(tmap)
 library(lubridate)
 library(ggimage)
 library(ggfx)
@@ -49,22 +66,6 @@ library(sysfonts)
 library(magick)
 library(showtext)
 ```
-
-
-## Enable showtext_auto()
-
-```{r}
-# enable showtext 
-showtext_auto()
-```
-
-## Load fonts
-
-```{r}
-font_add_google(name = "Keania One", family = "ko")
-font_add_google(name = "Smooch Sans", family = "ss")
-```
-
 
 ```{r}
 # paths 
@@ -75,6 +76,35 @@ waste_path <- here("examples","waste.jpg")
 knitr::include_graphics(cooling_tower_path)
 knitr::include_graphics(waste_path)
 knitr::include_graphics(france_path)
+```
+
+
+
+5. Hand-drawn data viz
+```{r}
+
+timeline_path <- here("samples","timeline_draft.jpg")
+exposure_path <- here("samples","exposure_bar.jpg")
+cesium_path <- here("samples","cesium.jpg")
+
+knitr::include_graphics(timeline_path)
+knitr::include_graphics(exposure_path)
+knitr::include_graphics(cesium_path)
+```
+
+
+6. Mock up of all my data viz
+## Enable showtext_auto()
+```{r}
+# enable showtext 
+showtext_auto()
+```
+
+## Load fonts
+
+```{r}
+font_add_google(name = "Keania One", family = "ko")
+font_add_google(name = "Smooch Sans", family = "ss")
 ```
 
 # Load data
@@ -112,49 +142,6 @@ nuclear_accidents$date <- year(as.Date(parse_date_time(nuclear_accidents$date, o
 ```
 
 ```{r}
-
-# world <- ne_countries(scale = "medium", returnclass = "sf") %>%
-#   filter(continent %in% c("North America","Asia","Europe"))
-# 
-# relevant_countries <- world %>% 
-#   filter(name %in% c("United States of America","Russia","Ukraine","Germany","Switzerland","Czechia","Sweden","Japan","Hungary","France","Spain"))
-
-# # reorder lat and long cols before st_as_sf transformation
-# nuclear_accidents <- nuclear_accidents %>%
-#   relocate(longitude,latitude) %>%
-#   filter(!is.na(ines_level)) # drop if ines_level = NA, means accident too small to have level assigned
-# 
-# # transform df to sf
-# nuclear_accidents_sf <- st_as_sf(nuclear_accidents, coords = c("longitude", "latitude"), crs = 4326)
-
-```
-
-```{r}
-
-# # testing a map as data viz
-# tmap_mode("plot") 
-# 
-# map <-tm_shape(world) +
-#   tm_polygons(col = "gold2",
-#               border.col = "grey13",
-#               popup.vars = NULL) +
-# tm_shape(nuclear_accidents_sf) +
-#   tm_text("incident",
-#           size = 0.7, 
-#           col = "black",
-#           auto.placement = TRUE,
-#           shadow = TRUE) +
-#   tm_bubbles(size = 1,
-#              col = "ines_level",
-#              palette = rev(scico(n = 7, palette = "roma"))) +
-#   tm_layout(bg.color = "lightblue")
-# 
-# 
-# map
-#   
-```
-
-```{r}
 # add nuclear symbol to df
 nuclear_accidents$image <- rep(c(here("samples","nuclear_symbol.png")), 10)
 
@@ -169,7 +156,6 @@ nuclear_accidents$positions <- c(0.13, -0.1, 0.09, -0.05, .05, -.1, .09, -.05, .
 nuclear_accidents$directions <- c(1, -1) 
 
 ```
-
 
 # Create timeline of nuclear accidents
 
@@ -299,7 +285,7 @@ exposure <- ggplot(chernobyl_exposure, aes(
     
   scale_fill_gradientn(
       
-    colours = c("springgreen","firebrick1","deeppink"),
+    colours = c("springgreen","deeppink", "firebrick2"),
     name = "Dose Rate\n(mR/h)",
     transform = "sqrt"
     
@@ -317,7 +303,7 @@ exposure <- ggplot(chernobyl_exposure, aes(
     
     title = "RADIATION EXPOSURE BY PROXIMITY TO CHERNOBYL NUCLEAR POWER PLANT MEASURED FROM JANUARY 1987 TO JUNE, 1987",
     
-    subtitle = "Gradient represents exposure dose rate (mR/h)",
+    subtitle = "Dangerous levels of radiation reached even those who were 40 km(+) away from the Chernobyl Power Plant",
     
     x = "Distance from Chernobyl NPP (km)",
     
@@ -395,10 +381,27 @@ water <- ggplot(chernobyl_water, aes(x = distance_from_cnpp_km, y = x137cs_depos
 ggsave("chernobyl_water_glow.png", plot = water, width = 10, height = 6, dpi = 300)
 
 water
-
 ```
 
+7. Answer questions about the mock ups
 
+a. What challenges did you encounter or anticipate encountering as you continue to build / iterate on your visualizations in R? If you struggled with mocking up any of your three visualizations (from #6, above), describe those challenges here.
+
+Some of the main challenges were making decisions on what style or theme I wanted to use across my mock ups. I wanted to start creating the theme now rather than wait until homework 4 because I figured it would save me time down the line. I spent a lot of time trying different things. It was also a challenge to research and adopt packages and techniques to make my ideas come true but it was also the part of the homeowork that I had most fun with/inspired me the most. 
+
+b. What ggplot extension tools / packages do you need to use to build your visualizations? Are there any that we haven’t covered in class that you’ll be learning how to use for your visualizations?
+
+Yes, there are several that I used that we did not cover in class. 
+Packages:
+- (scico)
+- (htmltools)
+- (ggimage) <- I cannot remember if we covered this one? 
+- (ggfx)
+- (magick)
+
+c. What feedback do you need from the instructional team and / or your peers to ensure that your intended message is clear?
+
+I would particularly appreciate feedback on the cohesiveness of the aesthethic choices I have made thus far. I was also consdering including the art of some really cool nuclear power artists that I found but I could not think of the right place or the right way to showcase them. Any ideas on this would be greatly appreciated! I would also like feedback on how much context I should include in my infographic / data viz since nuclear energy is a rather technical topic and I understand that this is not everyones' special itnerest! 
 
 
 
